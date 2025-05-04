@@ -7,11 +7,15 @@ logging.basicConfig(
 from fastapi import FastAPI
 from app.database import engine, Base
 from app import create_app
+from app.routers import history
 
 # 创建数据库表（不包含用户表）
 Base.metadata.create_all(bind=engine)
 
 app = create_app()
+
+# 注册历史记录路由
+app.include_router(history.router)
 
 @app.get("/")
 async def root():

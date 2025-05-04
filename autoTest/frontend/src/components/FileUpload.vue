@@ -177,7 +177,7 @@ const handleGenerateTestCases = async () => {
   })
   
   try {
-    const testCases = await generateTestCases(store.uploadedFilename)
+    const testCases = await generateTestCases(store.uploadedFilename, store.originalFilename)
     store.setTestCases(testCases)
     ElMessage.success('测试用例生成成功！')
   } catch (err) {

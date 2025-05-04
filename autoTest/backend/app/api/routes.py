@@ -1,9 +1,12 @@
 import os
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Request
+from fastapi import APIRouter, UploadFile, File, HTTPException, Form, Request, Depends
 from app.services.generate_service import GenerateService
 from app.services.export_service import ExportService
+from app.services.history_service import HistoryService
 from app.models.schemas import TestCaseResponse, TestCase
 from app.utils.file_parser import parse_document
+from app.database import get_db
+from sqlalchemy.orm import Session
 import shutil
 from pathlib import Path
 from fastapi.responses import StreamingResponse, JSONResponse
@@ -11,6 +14,7 @@ from docx import Document
 import io
 import logging
 import traceback
+import json
 
 # 配置日志记录器
 logger = logging.getLogger(__name__)
@@ -83,7 +87,11 @@ async def upload_file(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate")
-async def generate_test_cases(filename: str = Form(...)):
+async def generate_test_cases(
+    filename: str = Form(...),
+    original_filename: str = Form(...),
+    db: Session = Depends(get_db)
+):
     """
     生成测试用例
     """
@@ -100,6 +108,16 @@ async def generate_test_cases(filename: str = Form(...)):
         try:
             test_cases = await generate_service.generate_test_cases(filename)
             logger.info(f"成功生成 {len(test_cases)} 个测试用例")
+            
+            # 保存历史记录（包含用例详情，显示原始文件名）
+            history_service = HistoryService(db)
+            history_service.create_history(
+                user_id="default_user",
+                query=f"生成测试用例 - 文件: {original_filename}",
+                response=f"成功生成 {len(test_cases)} 个测试用例",
+                testcases=json.dumps([tc.model_dump() for tc in test_cases], ensure_ascii=False)
+            )
+            
             return {"test_cases": test_cases}
             
         except Exception as e:
@@ -219,5 +237,37 @@ async def export_script(request: Request):
         raise
     except Exception as e:
         logger.error(f"导出脚本失败: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/history")
+async def get_history(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+    """
+    获取历史记录
+    """
+    try:
+        history_service = HistoryService(db)
+        histories = history_service.get_user_history("default_user", skip, limit)
+        return histories
+    except Exception as e:
+        logger.error(f"获取历史记录失败: {str(e)}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/history/{history_id}")
+async def delete_history(history_id: int, db: Session = Depends(get_db)):
+    """
+    删除历史记录
+    """
+    try:
+        history_service = HistoryService(db)
+        success = history_service.delete_history(history_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="历史记录不存在")
+        return {"success": True}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"删除历史记录失败: {str(e)}")
         logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e)) 

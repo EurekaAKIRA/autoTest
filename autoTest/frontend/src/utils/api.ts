@@ -39,9 +39,10 @@ export const uploadDocument = async (file: File) => {
   return response.data
 }
 
-export const generateTestCases = async (filename: string): Promise<TestCase[]> => {
+export const generateTestCases = async (filename: string, originalFilename: string): Promise<TestCase[]> => {
   const formData = new FormData()
   formData.append('filename', filename)
+  formData.append('original_filename', originalFilename)
   const response = await api.post('/generate', formData)
   return response.data.test_cases
 }
