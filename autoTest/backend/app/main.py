@@ -1,25 +1,22 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+)
+
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from app.database import engine, Base
+from app import create_app
 
-app = FastAPI(
-    title="测试用例生成系统",
-    description="基于大模型的测试用例自动生成系统",
-    version="1.0.0"
-)
+# 创建数据库表（不包含用户表）
+Base.metadata.create_all(bind=engine)
 
-# 配置CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # 在生产环境中应该限制为特定域名
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# 导入路由
-from app.api.routes import router as api_router
-app.include_router(api_router, prefix="/api")
+app = create_app()
 
 @app.get("/")
 async def root():
-    return {"message": "欢迎使用测试用例生成系统"} 
+    return {"message": "欢迎使用测试用例生成系统"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000) 
