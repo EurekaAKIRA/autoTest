@@ -1,19 +1,22 @@
 <template>
-  <el-container>
-    <el-header>
-      <h1>测试用例生成系统</h1>
-    </el-header>
-    <el-main>
-      <router-view></router-view>
-    </el-main>
-  </el-container>
+  <el-config-provider>
+    <router-view />
+  </el-config-provider>
 </template>
 
 <script setup lang="ts">
-// 组件逻辑
+import { ElConfigProvider } from 'element-plus'
+import 'element-plus/dist/index.css'
 </script>
 
 <style>
+#app {
+  font-family: Avenir, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #2c3e50;
+}
+
 .el-header {
   background-color: #409EFF;
   color: white;
