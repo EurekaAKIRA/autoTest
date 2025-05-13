@@ -3,6 +3,7 @@
     <el-container>
       <el-header>
         <h1>测试用例生成器</h1>
+        <el-button type="info" @click="goHistory" style="position: absolute; right: 40px; top: 18px;">历史记录</el-button>
       </el-header>
       
       <el-main>
@@ -52,8 +53,14 @@ import FileUpload from '@/components/FileUpload.vue'
 import TestCaseList from '@/components/TestCaseList.vue'
 import { useTestStore } from '@/store'
 import { exportWord, exportScript } from '@/utils/api'
+import { useRouter } from 'vue-router'
 
 const store = useTestStore()
+const router = useRouter()
+
+const goHistory = () => {
+  router.push('/history')
+}
 
 const handleExportWord = async () => {
   if (!store.testCases || store.testCases.length === 0) {
@@ -119,6 +126,7 @@ const handleExportScript = async () => {
   align-items: center;
   justify-content: center;
   padding: 0 20px;
+  position: relative;
 }
 
 .el-header h1 {

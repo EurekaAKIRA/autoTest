@@ -1,23 +1,42 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/Home.vue'
-import GenerateTest from '../views/GenerateTest.vue'
+import Home from '@/views/Home.vue'
+import Login from '@/views/Login.vue'
+import HistoryView from '../views/HistoryView.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory(),
   routes: [
     {
       path: '/',
       name: 'home',
-      component: Home
+      component: Home,
+      meta: { requiresAuth: true }
     },
     {
-      path: '/generate',
-      name: 'generate',
-      component: GenerateTest
+      path: '/login',
+      name: 'login',
+      component: Login,
+      meta: { requiresAuth: false }
+    },
+    {
+      path: '/history',
+      name: 'history',
+      component: HistoryView
     }
   ]
 })
 
-// 路由守卫相关内容已移除，专注核心功能
+// 路由守卫
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  
+  if (to.meta.requiresAuth && !token) {
+    next('/login')
+  } else if (to.path === '/login' && token) {
+    next('/')
+  } else {
+    next()
+  }
+})
 
 export default router 

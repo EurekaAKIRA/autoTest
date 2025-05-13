@@ -1,30 +1,23 @@
 <template>
-  <el-config-provider>
+  <div class="app">
+    <nav-bar />
     <router-view />
-  </el-config-provider>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ElConfigProvider } from 'element-plus'
-import 'element-plus/dist/index.css'
+import NavBar from '@/components/NavBar.vue'
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
+.app {
+  min-height: 100vh;
+  background-color: #f5f7fa;
 }
 
-.el-header {
-  background-color: #409EFF;
-  color: white;
-  text-align: center;
-  line-height: 60px;
-}
-
-.el-main {
-  padding: 20px;
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 </style> 
