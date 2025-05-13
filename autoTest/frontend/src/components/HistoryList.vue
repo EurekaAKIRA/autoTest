@@ -8,7 +8,7 @@
       <div v-for="history in histories" :key="history.id" class="history-item">
         <div class="history-header">
           <span class="time">{{ formatDate(history.created_at) }}</span>
-          <button @click="deleteHistory(history.id)" class="delete-btn">删除</button>
+          <button @click="deleteHistoryItem(history.id)" class="delete-btn">删除</button>
         </div>
         <div class="history-content">
           <div class="query">
@@ -24,8 +24,8 @@
           </button>
           <div v-if="showDetailId === history.id && parseTestcases(history.testcases).length > 0" class="testcase-detail">
             <div style="margin-bottom: 10px;">
-              <button class="export-btn" @click="exportWord(history)">导出Word文档</button>
-              <button class="export-btn" @click="exportScript(history)">导出脚本</button>
+              <button class="export-btn" @click="exportWordFile(history)">导出Word文档</button>
+              <button class="export-btn" @click="exportScriptFile(history)">导出脚本</button>
             </div>
             <div v-for="(tc, idx) in parseTestcases(history.testcases)" :key="tc.id || idx" class="testcase-block">
               <div><strong>用例{{ idx + 1 }}：</strong> {{ tc.title }}</div>
@@ -62,8 +62,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
 import { format } from 'date-fns'
+import { getHistory, deleteHistory as deleteHistoryApi, exportWord as exportWordApi, exportScript as exportScriptApi } from '@/utils/api'
 
 interface TestCase {
   id: string
@@ -93,10 +93,8 @@ const fetchHistories = async () => {
     loading.value = true
     error.value = ''
     const skip = (currentPage.value - 1) * pageSize
-    const response = await axios.get('/api/history', {
-      params: { skip, limit: pageSize }
-    })
-    histories.value = response.data
+    const data = await getHistory(skip, pageSize)
+    histories.value = data
   } catch (err) {
     error.value = '加载历史记录失败'
     console.error(err)
@@ -105,9 +103,9 @@ const fetchHistories = async () => {
   }
 }
 
-const deleteHistory = async (id: number) => {
+const deleteHistoryItem = async (id: number) => {
   try {
-    await axios.delete(`/api/history/${id}`)
+    await deleteHistoryApi(id)
     await fetchHistories()
   } catch (err) {
     error.value = '删除历史记录失败'
@@ -137,15 +135,12 @@ function toggleDetail(id: number) {
   showDetailId.value = showDetailId.value === id ? null : id
 }
 
-async function exportWord(history: History) {
+async function exportWordFile(history: History) {
   const testcases = parseTestcases(history.testcases)
   if (!testcases.length) return
   try {
-    const response = await axios.post('/api/export_word', testcases, {
-      responseType: 'blob',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const blob = await exportWordApi(testcases)
+    const url = window.URL.createObjectURL(new Blob([blob]))
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', 'test_cases.docx')
@@ -159,18 +154,12 @@ async function exportWord(history: History) {
   }
 }
 
-async function exportScript(history: History) {
+async function exportScriptFile(history: History) {
   const testcases = parseTestcases(history.testcases)
   if (!testcases.length) return
   try {
-    const response = await axios.post('/api/export_script', {
-      test_cases: testcases,
-      script_type: 'pytest'
-    }, {
-      responseType: 'blob',
-      headers: { 'Content-Type': 'application/json' }
-    })
-    const url = window.URL.createObjectURL(new Blob([response.data]))
+    const blob = await exportScriptApi(testcases)
+    const url = window.URL.createObjectURL(new Blob([blob]))
     const link = document.createElement('a')
     link.href = url
     link.setAttribute('download', 'test_script_pytest.py')
